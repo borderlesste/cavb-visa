@@ -1,0 +1,59 @@
+/* Auth page background styles */
+.auth-bg, .detailed-register-bg {
+    background-image: url('https://toptransferbrasil.com.br/wp-content/uploads/2019/10/cristo-redentor-3.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* Override blue colors to green */
+.auth-bg .bg-iom-blue,
+.auth-bg .bg-blue-600,
+.detailed-register-bg .bg-blue-600 {
+    background-color: #28a745 !important;
+}
+
+.auth-bg .bg-iom-blue:hover,
+.auth-bg .bg-blue-600:hover,
+.detailed-register-bg .bg-blue-600:hover {
+    background-color: #20c997 !important;
+}
+
+.auth-bg .focus\:ring-iom-blue:focus,
+.auth-bg .focus\:ring-blue-500:focus,
+.detailed-register-bg .focus\:ring-blue-500:focus {
+    --tw-ring-color: #28a745 !important;
+}
+
+.auth-bg .focus\:border-iom-blue:focus,
+.auth-bg .focus\:border-blue-500:focus,
+.detailed-register-bg .focus\:border-blue-500:focus {
+    --tw-border-opacity: 1;
+    border-color: #28a745 !important;
+}
+
+.auth-bg .text-iom-blue,
+.detailed-register-bg .text-blue-900 {
+    color: #28a745 !important;
+}
+
+/* Green button styles */
+.btn-green {
+    background-color: #28a745;
+    color: white;
+    transition: background-color 0.2s;
+}
+
+.btn-green:hover {
+    background-color: #20c997;
+}
+
+.btn-green:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.5);
+}
+
+.btn-green:disabled {
+    background-color: #6c757d;
+}

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+  
+  <!-- Homepage -->
+  <url>
+    <loc>https://cavb-visa.iom.org/</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- Authentication Pages -->
+  <url>
+    <loc>https://cavb-visa.iom.org/auth</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Dashboard -->
+  <url>
+    <loc>https://cavb-visa.iom.org/dashboard</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Profile Management -->
+  <url>
+    <loc>https://cavb-visa.iom.org/profile</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Admin Dashboard (for search engines to know it exists, access controlled by auth) -->
+  <url>
+    <loc>https://cavb-visa.iom.org/admin</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Terms and Privacy (if they exist in the future) -->
+  <url>
+    <loc>https://cavb-visa.iom.org/terms</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  
+  <url>
+    <loc>https://cavb-visa.iom.org/privacy</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  
+  <!-- Help/Support Pages -->
+  <url>
+    <loc>https://cavb-visa.iom.org/help</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <!-- Contact -->
+  <url>
+    <loc>https://cavb-visa.iom.org/contact</loc>
+    <lastmod>2025-08-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+</urlset>

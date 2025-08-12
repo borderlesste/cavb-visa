@@ -1,0 +1,55 @@
+# Robots.txt for CAVB IOM Haiti - Brazil Visa Application System
+
+User-agent: *
+
+# Allow public pages
+Allow: /
+Allow: /auth
+Allow: /terms
+Allow: /privacy
+Allow: /help
+Allow: /contact
+
+# Disallow sensitive areas
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /admin
+Disallow: /api/
+Disallow: /uploads/
+
+# Disallow temporary and system files
+Disallow: /*.json$
+Disallow: /*.log$
+Disallow: /tmp/
+Disallow: /cache/
+Disallow: /.env
+Disallow: /.git/
+
+# Allow common crawlers to access sitemap
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://cavb-visa.iom.org/sitemap.xml
+
+# Specific rules for major search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# Block unwanted bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
