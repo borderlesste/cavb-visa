@@ -57,6 +57,14 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+  // Skip unsupported schemes or extension resources
+  if (request.url.startsWith('chrome-extension://')) {
+    return;
+  }
+  // Skip Vite dev/HMR/internal requests
+  if (url.pathname.startsWith('/@vite') || url.pathname.startsWith('/@react-refresh') || url.pathname.includes('__vite')) {
+    return;
+  }
   
   // Skip non-GET requests
   if (request.method !== 'GET') {
@@ -73,9 +81,12 @@ self.addEventListener('fetch', (event) => {
           
           // Cache successful responses
           if (response.ok) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            });
+            // Only cache http(s) GET requests
+            if (request.url.startsWith(self.location.origin)) {
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(request, responseClone).catch(()=>{});
+              });
+            }
           }
           
           return response;
@@ -120,9 +131,11 @@ self.addEventListener('fetch', (event) => {
             const responseClone = response.clone();
             
             // Cache the new resource
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            });
+            if (request.url.startsWith(self.location.origin)) {
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(request, responseClone).catch(()=>{});
+              });
+            }
             
             return response;
           });

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.editApplication = exports.deleteApplication = exports.getApplicationById = exports.getAllUserApplications = exports.scheduleAppointment = exports.uploadDocument = exports.createApplication = exports.getApplication = void 0;
+exports.getAppointmentAvailability = exports.editApplication = exports.deleteApplication = exports.getApplicationById = exports.getAllUserApplications = exports.scheduleAppointment = exports.uploadDocument = exports.createApplication = exports.getApplication = void 0;
 const uuid_1 = require("uuid");
 const joi_1 = __importDefault(require("joi"));
 const db_1 = require("../db");
@@ -188,7 +188,7 @@ const scheduleAppointment = async (req, res) => {
         connection = await db_1.pool.getConnection();
         await connection.beginTransaction();
         // Get application and user data
-        const [appRows] = await connection.execute('SELECT a.id, a.status, a.visa_type, u.fullName, u.email, u.date_of_birth, u.passport_number, u.nationality FROM applications a JOIN users u ON a.user_id = u.id WHERE a.user_id = ?', [userId]);
+        const [appRows] = await connection.execute('SELECT a.id, a.status, a.visa_type, u.fullName, u.email, u.passport_number, u.nationality FROM applications a JOIN users u ON a.user_id = u.id WHERE a.user_id = ?', [userId]);
         if (appRows.length === 0) {
             await connection.rollback();
             return res.status(404).json({ message: 'Application not found for user.' });
@@ -201,7 +201,7 @@ const scheduleAppointment = async (req, res) => {
             return res.status(403).json({ message: 'Application must be approved before scheduling.' });
         }
         // Check if Identity Document is verified
-        const [identityDocs] = await connection.execute('SELECT status FROM documents WHERE application_id = ? AND document_type = ?', [applicationId, 'Identity Document']);
+        const [identityDocs] = await connection.execute('SELECT ds.name AS status FROM documents d JOIN document_status ds ON d.status_id = ds.id WHERE d.application_id = ? AND d.document_type = ?', [applicationId, 'Identity Document']);
         const identityDocStatus = identityDocs[0]?.status;
         if (identityDocStatus !== types_1.DocumentStatus.VERIFIED) {
             await connection.rollback();
@@ -209,7 +209,8 @@ const scheduleAppointment = async (req, res) => {
         }
         // Update user personal info if provided
         if (personalInfo) {
-            await connection.execute('UPDATE users SET date_of_birth = ?, passport_number = ?, nationality = ? WHERE id = ?', [personalInfo.dateOfBirth, personalInfo.passportNumber, personalInfo.nationality, userId]);
+            // The users table does not have a date_of_birth column, so we only update the other fields.
+            await connection.execute('UPDATE users SET passport_number = ?, nationality = ? WHERE id = ?', [personalInfo.passportNumber, personalInfo.nationality, userId]);
         }
         const appointmentId = (0, uuid_1.v4)();
         // Create appointment
@@ -497,3 +498,47 @@ const editApplication = async (req, res) => {
     }
 };
 exports.editApplication = editApplication;
+const getAppointmentAvailability = async (req, res) => {
+    const { month, year } = req.query; // month is 1-based
+    if (!month || !year) {
+        return res.status(400).json({ message: 'Month and year are required.' });
+    }
+    const monthNumber = parseInt(month, 10);
+    const yearNumber = parseInt(year, 10);
+    // Validate date parameters
+    if (isNaN(monthNumber) || monthNumber < 1 || monthNumber > 12 || isNaN(yearNumber)) {
+        return res.status(400).json({ message: 'Invalid month or year.' });
+    }
+    const APPOINTMENT_LIMIT_PER_DAY = 25;
+    const LIMITED_AVAILABILITY_THRESHOLD = 15;
+    let connection;
+    try {
+        connection = await db_1.pool.getConnection();
+        // Query to get the count of appointments for each day in the given month and year
+        const [rows] = await connection.execute(`SELECT DAY(appointment_date) as day, COUNT(*) as count 
+             FROM appointments 
+             WHERE MONTH(appointment_date) = ? AND YEAR(appointment_date) = ? 
+             GROUP BY DAY(appointment_date)`, [monthNumber, yearNumber]);
+        const availability = {};
+        rows.forEach((row) => {
+            let status = 'available';
+            if (row.count >= APPOINTMENT_LIMIT_PER_DAY) {
+                status = 'full';
+            }
+            else if (row.count >= LIMITED_AVAILABILITY_THRESHOLD) {
+                status = 'limited';
+            }
+            availability[row.day] = { status, count: row.count };
+        });
+        res.json(availability);
+    }
+    catch (error) {
+        console.error('Error fetching appointment availability:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+    finally {
+        if (connection)
+            connection.release();
+    }
+};
+exports.getAppointmentAvailability = getAppointmentAvailability;

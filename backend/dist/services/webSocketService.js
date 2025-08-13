@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendMessageToUser = exports.removeClient = exports.addClient = void 0;
+exports.sendNotificationDeletedToUser = exports.sendNotificationUpdateToUser = exports.sendNotificationToUser = exports.sendMessageToUser = exports.removeClient = exports.addClient = void 0;
 const ws_1 = require("ws");
 // Map to store connections, userId -> WebSocket
 const clients = new Map();
@@ -32,3 +32,15 @@ const sendMessageToUser = (userId, message) => {
     }
 };
 exports.sendMessageToUser = sendMessageToUser;
+const sendNotificationToUser = (userId, notification) => {
+    (0, exports.sendMessageToUser)(userId, { type: 'NEW_NOTIFICATION', payload: { notification } });
+};
+exports.sendNotificationToUser = sendNotificationToUser;
+const sendNotificationUpdateToUser = (userId, notification) => {
+    (0, exports.sendMessageToUser)(userId, { type: 'NOTIFICATION_UPDATED', payload: { notification } });
+};
+exports.sendNotificationUpdateToUser = sendNotificationUpdateToUser;
+const sendNotificationDeletedToUser = (userId, id) => {
+    (0, exports.sendMessageToUser)(userId, { type: 'NOTIFICATION_DELETED', payload: { id } });
+};
+exports.sendNotificationDeletedToUser = sendNotificationDeletedToUser;

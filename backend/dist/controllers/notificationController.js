@@ -37,42 +37,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendPushNotification = exports.updatePreferences = exports.getPreferences = exports.getEmailHistory = exports.sendEmail = exports.getUnreadCount = exports.deleteNotification = exports.markAllAsRead = exports.markAsRead = exports.getNotifications = exports.unsubscribeFromPush = exports.subscribeToPush = exports.getVapidKey = void 0;
+exports.createNotification = createNotification;
 const web_push_1 = __importDefault(require("web-push"));
 const emailService_1 = require("../services/emailService");
 const db = __importStar(require("../db"));
-// Mock data for notifications (in production, use database)
-const mockNotifications = [
-    {
-        id: '1',
-        title: 'Application Update',
-        message: 'Your visa application has been updated',
-        type: 'info',
-        userId: 'user1',
-        applicationId: 'app1',
-        isRead: false,
-        createdAt: new Date().toISOString(),
-    },
-    {
-        id: '2',
-        title: 'Document Required',
-        message: 'Please upload your passport document',
-        type: 'warning',
-        userId: 'user1',
-        applicationId: 'app1',
-        isRead: false,
-        createdAt: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-        id: '3',
-        title: 'Appointment Scheduled',
-        message: 'Your visa appointment has been confirmed',
-        type: 'success',
-        userId: 'user1',
-        applicationId: 'app1',
-        isRead: true,
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-    },
-];
+const webSocketService_1 = require("../services/webSocketService");
+// Helper to insert a notification (used potentially by other services)
+async function createNotification(params) {
+    const { userId, title, message, type = 'info', applicationId = null } = params;
+    const id = crypto.randomUUID();
+    await db.query(`INSERT INTO notifications (id, user_id, title, message, type, application_id) VALUES (?, ?, ?, ?, ?, ?)`, [id, userId, title, message, type, applicationId]);
+    const notification = { id, user_id: userId, title, message, type, application_id: applicationId, is_read: 0, created_at: new Date().toISOString() };
+    // Real-time push via WebSocket
+    (0, webSocketService_1.sendNotificationToUser)(userId, {
+        id,
+        title,
+        message,
+        type,
+        is_read: 0,
+        created_at: notification.created_at,
+        application_id: applicationId
+    });
+    return id;
+}
 const mockPreferences = {
     email: {
         applicationUpdates: true,
@@ -189,10 +176,10 @@ const markAsRead = async (req, res) => {
     try {
         const { notificationId } = req.params;
         const userId = req.user?.id;
-        // In production, update notification in database
-        const notification = mockNotifications.find(n => n.id === notificationId && n.userId === userId);
-        if (notification) {
-            notification.isRead = true;
+        await db.query('UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?', [notificationId, userId]);
+        const updated = await db.query('SELECT id, title, message, type, is_read, created_at, application_id FROM notifications WHERE id = ? AND user_id = ?', [notificationId, userId]);
+        if (updated.rows.length > 0) {
+            (0, webSocketService_1.sendNotificationUpdateToUser)(userId, updated.rows[0]);
         }
         res.json({ message: 'Notification marked as read' });
     }
@@ -206,12 +193,10 @@ exports.markAsRead = markAsRead;
 const markAllAsRead = async (req, res) => {
     try {
         const userId = req.user?.id;
-        // In production, update all user notifications in database
-        mockNotifications.forEach(notification => {
-            if (notification.userId === userId) {
-                notification.isRead = true;
-            }
-        });
+        await db.query('UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0', [userId]);
+        // Optionally send a summary event; fetch last 10 updated for client refresh
+        const recent = await db.query('SELECT id, title, message, type, is_read, created_at, application_id FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 10', [userId]);
+        recent.rows.forEach(n => (0, webSocketService_1.sendNotificationUpdateToUser)(userId, n));
         res.json({ message: 'All notifications marked as read' });
     }
     catch (error) {
@@ -225,11 +210,9 @@ const deleteNotification = async (req, res) => {
     try {
         const { notificationId } = req.params;
         const userId = req.user?.id;
-        // In production, delete from database
-        const index = mockNotifications.findIndex(n => n.id === notificationId && n.userId === userId);
-        if (index > -1) {
-            mockNotifications.splice(index, 1);
-        }
+        const result = await db.query('DELETE FROM notifications WHERE id = ? AND user_id = ?', [notificationId, userId]);
+        if (result.rows) { /* query wrapper returns {rows}; deletions not reflected here */ }
+        (0, webSocketService_1.sendNotificationDeletedToUser)(userId, notificationId);
         res.json({ message: 'Notification deleted' });
     }
     catch (error) {
@@ -242,8 +225,8 @@ exports.deleteNotification = deleteNotification;
 const getUnreadCount = async (req, res) => {
     try {
         const userId = req.user?.id;
-        const count = mockNotifications.filter(n => n.userId === userId && !n.isRead).length;
-        res.json({ count });
+        const result = await db.query('SELECT COUNT(*) as cnt FROM notifications WHERE user_id = ? AND is_read = 0', [userId]);
+        res.json({ count: result.rows[0].cnt });
     }
     catch (error) {
         console.error('Error getting unread count:', error);

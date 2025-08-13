@@ -112,13 +112,30 @@ const loginUser = async (req, res) => {
     const { email, password } = req.body;
     let connection;
     try {
+        if (process.env.DEBUG_AUTH === 'true') {
+            console.log('[LOGIN] Attempt start', { email });
+        }
         connection = await db_1.pool.getConnection();
         const [rows] = await connection.execute('SELECT id, fullName, email, role, password_hash, email_verified FROM users WHERE email = ?', [email]);
+        if (process.env.DEBUG_AUTH === 'true') {
+            console.log('[LOGIN] Query result count:', rows.length);
+        }
         if (rows.length === 0) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
         const user = rows[0];
-        const isMatch = await bcrypt_1.default.compare(password, user.password_hash);
+        if (!user.password_hash) {
+            console.error('[LOGIN] password_hash missing in DB row for user id:', user.id);
+            return res.status(500).json({ message: 'Internal server error during login' });
+        }
+        let isMatch = false;
+        try {
+            isMatch = await bcrypt_1.default.compare(password, user.password_hash);
+        }
+        catch (compareErr) {
+            console.error('[LOGIN] bcrypt.compare failed', compareErr);
+            return res.status(500).json({ message: 'Internal server error during login' });
+        }
         if (!isMatch) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
@@ -131,6 +148,9 @@ const loginUser = async (req, res) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password_hash, ...userData } = user;
         const token = jsonwebtoken_1.default.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || 'averysecretkey', { expiresIn: '1d' });
+        if (process.env.DEBUG_AUTH === 'true') {
+            console.log('[LOGIN] Success for user id:', user.id);
+        }
         res.status(200).json({ token, user: userData });
     }
     catch (dbError) {

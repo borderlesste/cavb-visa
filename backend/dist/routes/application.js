@@ -28,4 +28,6 @@ router.put('/:applicationId', applicationController_1.editApplication);
 router.post('/documents/:docId', rateLimiter_1.uploadLimiter, upload.single('document'), applicationController_1.uploadDocument);
 // Route to handle appointment scheduling
 router.post('/appointment', applicationController_1.scheduleAppointment);
+// Route to get appointment availability
+router.get('/appointments/availability', applicationController_1.getAppointmentAvailability);
 exports.default = router;
