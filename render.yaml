@@ -1,0 +1,61 @@
+services:
+- type: web
+  name: cavb-visa
+  runtime: docker
+  repo: https://github.com/borderlesste/cavb-visa
+  branch: pro-git
+  plan: free
+  envVars:
+  - key: SERVER_URL
+    sync: false
+  - key: DB_HOST
+    sync: false
+  - key: CORS_ORIGIN
+    sync: false
+  - key: CLIENT_URL
+    sync: false
+  - key: VAPID_PRIVATE_KEY
+    sync: false
+  - key: VAPID_PUBLIC_KEY
+    sync: false
+  - key: SMTP_USER
+    sync: false
+  - key: SMTP_PORT
+    sync: false
+  - key: SMTP_PASS
+    sync: false
+  - key: SMTP_HOST
+    sync: false
+  - key: SESSION_SECRET
+    sync: false
+  - key: PORT
+    sync: false
+  - key: PAYPAL_RETURN_URL
+    sync: false
+  - key: PAYPAL_ENVIRONMENT
+    sync: false
+  - key: PAYPAL_CLIENT_SECRET
+    sync: false
+  - key: PAYPAL_CLIENT_ID
+    sync: false
+  - key: PAYPAL_CANCEL_URL
+    sync: false
+  - key: NODE_ENV
+    sync: false
+  - key: JWT_SECRET
+    sync: false
+  - key: DB_USER
+    sync: false
+  - key: DB_PORT
+    sync: false
+  - key: DB_PASSWORD
+    sync: false
+  - key: DB_NAME
+    sync: false
+  region: oregon
+  dockerContext: backend
+  dockerfilePath: backend/Dockerfile
+  autoDeployTrigger: commit
+  previews:
+    generation: automatic
+version: "1"
