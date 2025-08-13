@@ -16,7 +16,8 @@ const isVercel = origin.includes('vercel.app');
 
 export const API_ROUTES = {
   // In production behind nginx, the API is proxied under /api. In development point to backend port 4000 unless overridden.
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || (isProd ? '/api' : 'http://localhost:4000/api'),
+  // If on Vercel, point directly to Render backend since Vercel can't proxy
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || (isProd ? (isVercel ? 'https://cavb-visa.onrender.com/api' : '/api') : 'http://localhost:4000/api'),
   AUTH: '/auth',
   APPLICATIONS: '/applications',
   ADMIN: '/admin',
