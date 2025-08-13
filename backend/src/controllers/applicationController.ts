@@ -330,7 +330,7 @@ export const getAllUserApplications = async (req: express.Request, res: express.
             [userId]
         );
         
-        const applications = [];
+        const applications: any[] = [];
         
         for (const app of appRows) {
             // Get documents for each application

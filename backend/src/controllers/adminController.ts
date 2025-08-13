@@ -407,7 +407,7 @@ export const getAppointments = async (req: express.Request, res: express.Respons
             JOIN users u ON a.user_id = u.id
         `;
         
-        const params = [];
+        const params: any[] = [];
         
         if (date && typeof date === 'string') {
             query += ' WHERE DATE(apt.appointment_date) = ?';

@@ -3,6 +3,25 @@ import { pool } from '../db';
 import { v4 as uuidv4 } from 'uuid';
 import { sendMessageToUser } from '../services/webSocketService';
 
+interface ConversationResponse {
+  id: string;
+  participantId: string;
+  participantName: string;
+  participantRole: string;
+  lastMessage: {
+    id: string;
+    content: string;
+    senderId: string;
+    senderName: string;
+    senderRole: string;
+    timestamp: string;
+    isRead: boolean;
+    applicationId?: string;
+  } | null;
+  unreadCount: number;
+  applicationId?: string;
+}
+
 // Ensure consistent participant ordering (lexicographically) so the UNIQUE index (participant_a, participant_b) works reliably.
 function canonicalPair(a: string, b: string): [string, string] {
   return a <= b ? [a, b] : [b, a];
@@ -11,7 +30,7 @@ function canonicalPair(a: string, b: string): [string, string] {
 const ENFORCE_APP_ID = process.env.ENFORCE_CONVERSATION_APPLICATION_ID === 'true';
 
 // Helper to fetch conversation summary for a user
-async function buildConversationResponse(conversation: any, userId: string, connection: any) {
+async function buildConversationResponse(conversation: any, userId: string, connection: any): Promise<ConversationResponse> {
   // Last message
   const [lastMsgRows]: any = await connection.execute(
     'SELECT id, sender_id as senderId, recipient_id as recipientId, content, is_read as isRead, created_at as createdAt FROM messages WHERE conversation_id = ? ORDER BY created_at DESC LIMIT 1',
@@ -60,7 +79,7 @@ export const getConversations = async (req: express.Request, res: express.Respon
   try {
     connection = await pool.getConnection();
 
-    let conversationsResult = [];
+    let conversationsResult: ConversationResponse[] = [];
 
     if (userRole === 'admin') {
       // Admins can see all users to start a conversation
