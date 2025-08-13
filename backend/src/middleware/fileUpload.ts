@@ -132,7 +132,7 @@ const fileFilter: multer.Options['fileFilter'] = async (req, file, cb) => {
 };
 
 // Additional file validation after upload
-export const validateUploadedFile = async (file: Express.Multer.File): Promise<boolean> => {
+export const validateUploadedFile = async (file: any): Promise<boolean> => {
   try {
     // Read first few bytes to verify file type
     const buffer = await fs.readFile(file.path);

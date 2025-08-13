@@ -4,7 +4,7 @@ import multer from 'multer';
 export interface FileUploadError extends Error {
   code?: string;
   field?: string;
-  file?: Express.Multer.File;
+  file?: any;
 }
 
 export const handleUploadError = (
