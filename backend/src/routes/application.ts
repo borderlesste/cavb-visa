@@ -2,10 +2,8 @@ import { Router } from 'express';
 import { getApplication, createApplication, uploadDocument, scheduleAppointment, getAllUserApplications, getApplicationById, deleteApplication, editApplication, getAppointmentAvailability } from '../controllers/applicationController';
 import { protect } from '../middleware/authMiddleware';
 import { applicationLimiter, uploadLimiter } from '../middleware/rateLimiter';
-import multer from 'multer';
-
-// Configure multer for file uploads. It will save files to an 'uploads' directory.
-const upload = multer({ dest: 'uploads/' });
+import { uploadSingle, validateUploadedFile } from '../middleware/fileUpload';
+import { handleAsyncUpload } from '../middleware/uploadErrorHandler';
 
 const router = Router();
 
@@ -28,8 +26,26 @@ router.delete('/:applicationId', deleteApplication);
 // Edit specific application by ID
 router.put('/:applicationId', editApplication);
 
-// Route to handle document uploads with strict rate limiting
-router.post('/documents/:docId', uploadLimiter, upload.single('document'), uploadDocument);
+// Route to handle document uploads with strict rate limiting and validation
+router.post('/documents/:docId', 
+  uploadLimiter, 
+  handleAsyncUpload(uploadSingle('document')),
+  async (req, res, next) => {
+    try {
+      if (req.file) {
+        await validateUploadedFile(req.file);
+      }
+      next();
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'File validation failed',
+        code: 'VALIDATION_FAILED'
+      });
+    }
+  },
+  uploadDocument
+);
 
 // Route to handle appointment scheduling
 router.post('/appointment', scheduleAppointment);
